@@ -1,0 +1,19 @@
+-----------------------------------------------------------------------------
+[1513781752] - Ejecutando DEPLOY.
+-----------------------------------------------------------------------------
+
+[1513781752] - Conexion configurada como ENTEL_DEV/welcome1@172.17.216.68:1521/ENTELDESA.
+
+[1513781752] - Ejecución por SQLPlus : SQL*Plus: Release 12.1.0.2.0 Production on Wed Dec 20 11:55:52 2017 Copyright (c) 1982, 2014, Oracle. All rights reserved. Last Successful login time: Wed Dec 20 2017 11:54:39 -03:00 Connected to: Oracle Database 12c Enterprise Edition Release 12.1.0.2.0 - 64bit Production With the Partitioning, OLAP, Advanced Analytics and Real Application Testing options Warning: Package created with compilation errors. Warning: Package Body created with compilation errors. Disconnected from Oracle Database 12c Enterprise Edition Release 12.1.0.2.0 - 64bit Production With the Partitioning, OLAP, Advanced Analytics and Real Application Testing options.
+
+[1513781752] - Resultado : ..
+
+-----------------------------------------------------------------------------
+[1513781752] - Script Finalizado. Logs generados en a.
+-----------------------------------------------------------------------------
+
+[1513781766] - Resultado : ..
+
+-----------------------------------------------------------------------------
+[1513781766] - Script Finalizado. Logs generados en a.
+-----------------------------------------------------------------------------

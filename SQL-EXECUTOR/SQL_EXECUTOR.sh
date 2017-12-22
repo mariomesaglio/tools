@@ -131,9 +131,14 @@ run_action_script()
 
 verify_action_outcome()
 {
-  outcome=$(cat "$instance_logs/SQL_$action""_LOG.log" | grep "___")
+  outcome=$(cat "$instance_logs/SQL_$action""_LOG.log" | grep -o "@SUCCESS")
+
+  if [ -z $outcome ]
+    then
+      outcome='@ERROR'
+  fi
 }
-an
+
 init_sqlplus_connection()
 {
   sqlplus_connection="$db_user/$db_pass@$db_host:$db_port/$db_sid"

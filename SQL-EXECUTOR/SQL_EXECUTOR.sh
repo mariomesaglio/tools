@@ -16,27 +16,11 @@ mkdir -p $instance_logs
 log_export_location="NA"
 
 # -----------------------------------------------------------------------------------------------------------
-# Aux Functions
+# Auxiliary Functions
 # -----------------------------------------------------------------------------------------------------------
 move_sqlplus_logs()
 {
-  case $action in
-    DEPLOY)   mv $deploy_scripts_location/*.$spool_log_file_extension $instance_logs
-    ;;
-    ROLLBACK) mv $rollback_scripts_location/*.$spool_log_file_extension $instance_logs
-    ;;
-    VERIFY)   mv $verify_scripts_location/*.$spool_log_file_extension $instance_logs
-    ;;
-  esac
-}
-
-export_logs()
-{
-  if [ $log_export_location != "NA" ]
-    then
-      mv $instance_logs $log_export_location
-      instance_logs=$log_export_location
-  fi
+   mv $1/*.log $instance_logs
 }
 
 log()
@@ -47,12 +31,12 @@ log()
 
 log_standard()
 {
-  log "[$(date +%c)] - [INFO] -  $@"
+  log "[$(date +%c)] - [INFO] - $@"
 }
 
 log_error()
 {
-  log "[$(date +%c)] - [ERROR] - $@"
+  log "[$(date +%c)] - [ERROR] -$@"
 }
 
 log_separator()
@@ -76,8 +60,7 @@ log_separated()
 
 log_outcome()
 {
-  log_separated "Resultado : $outcome."
-  log_focused "Script Finalizado. Logs generados en $instance_logs."
+  log_separated "Resultado - "$action" : $outcome."
 }
 
 set_outcome()
@@ -97,36 +80,46 @@ validate_action_parameter()
   fi
 }
 
+execute_script()
+{
+  local prev_location=$(pwd)
+
+  cd $1
+
+  if [ ! -f "$2" ];
+    then
+      log_error "Script $1/$2 Not Found."
+      set_outcome ERROR
+    else
+      sqlplus_log=$(sqlplus $sqlplus_connection @$2)
+      log_standard "Ejecución por SQLPlus : $sqlplus_log"
+      move_sqlplus_logs $1
+  fi
+
+  cd $prev_location
+}
+
+
+# -----------------------------------------------------------------------------------------------------------
+# Core Functions
+# -----------------------------------------------------------------------------------------------------------
 run_action_script()
 {
-  log_focused "Ejecutando $action."
-  log_separated "Conexion configurada como $sqlplus_connection."
+  log_separated "Ejecutando $action."
 
-  local script_path=""
-  local script_filename="SQL_$action.sql"
+  local action_script_location=''
+  local action_script_name="SQL_$action.sql"
 
   case $action in
-    DEPLOY)   script_path=$deploy_scripts_location
+    DEPLOY)   action_script_location=$deploy_scripts_location
     ;;
-    ROLLBACK) script_path=$rollback_scripts_location
+    ROLLBACK) action_script_location=$rollback_scripts_location
     ;;
-    VERIFY)   script_path=$verify_scripts_location
+    VERIFY)   action_script_location=$verify_scripts_location
     ;;
   esac
 
-  cd $script_path
-
-  if [ ! -f $script_filename ];
-    then
-      log_error "Script $script_path/$script_filename Not Found."
-      set_outcome ERROR
-    else
-      sqlplus_log=$(sqlplus $sqlplus_connection @SQL_$action.sql)
-      log_standard "Ejecución por SQLPlus : $sqlplus_log"
-      move_sqlplus_logs
-  fi
-
-  cd $script_location
+  execute_script $action_script_location $action_script_name
 }
 
 verify_action_outcome()
@@ -137,11 +130,30 @@ verify_action_outcome()
     then
       outcome='@ERROR'
   fi
+
+  case $action in
+    DEPLOY)   log_outcome; action="VERIFY"; run_action_script; verify_action_outcome
+    ;;
+    ROLLBACK) log_outcome
+    ;;
+    VERIFY)   log_outcome
+    ;;
+  esac
 }
 
 init_sqlplus_connection()
 {
   sqlplus_connection="$db_user/$db_pass@$db_host:$db_port/$db_sid"
+  log_separated "Conexion configurada como $sqlplus_connection."
+}
+
+export_logs()
+{
+  if [ $log_export_location != "NA" ]
+    then
+      mv $instance_logs $log_export_location
+      instance_logs=$log_export_location
+  fi
 }
 
 # -----------------------------------------------------------------------------------------------------------
@@ -170,8 +182,9 @@ while getopts ":u:l:h:p:s:A:e:" opt; do
   esac
 done
 
-init_sqlplus_connection   # 1 - Initiate SQLPlus
+init_sqlplus_connection   # 1 - Initiate SQLPlus Connection
 run_action_script         # 2 - Execute correlated script.
-verify_action_outcome
-log_outcome               # 3 - Log script outcome
+verify_action_outcome     # 3 - Verify the script outcome.
 export_logs               # 4 - Export generated logs
+
+log_focused "Script Finalizado. Logs generados en $instance_logs."
